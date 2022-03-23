@@ -1,3 +1,5 @@
+pub mod config;
+
 fn main() {
-    println!("Hello, world!");
+    let configs = config::read_config("test.yaml");
 }

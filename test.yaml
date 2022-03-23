@@ -1,0 +1,7 @@
+save_dir: ~/save-game-backups
+
+elden-ring:
+  root: "%APPDATA%/EldenRing/76561198207054704"
+  files:
+    - ER0000.sl2
+  interval: 30
