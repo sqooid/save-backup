@@ -1,8 +1,7 @@
 use std::fs::File;
 use std::io::{self, BufReader};
-use std::path::PathBuf;
 
-use super::types::{GameConfig, SharedConfig};
+use super::config_types::{GameConfig, SharedConfig};
 
 const SAVE: &str = "save_root";
 const ZIP: &str = "zip";
@@ -85,7 +84,7 @@ TESTS
 mod tests {
     use std::path::PathBuf;
 
-    use crate::config::types::GameConfig;
+    use crate::config::config_types::GameConfig;
 
     #[test]
     fn test_config_no_defaults() {

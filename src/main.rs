@@ -1,8 +1,8 @@
 use std::path::Path;
 
 mod config {
+    pub mod config_types;
     pub mod parse;
-    pub mod types;
 }
 mod backup {
     pub mod file_data;
