@@ -5,6 +5,7 @@ mod config {
     pub mod parse;
 }
 mod backup {
+    pub mod backup_types;
     pub mod file_data;
 }
 

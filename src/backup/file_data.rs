@@ -1,20 +1,16 @@
-use std::fs;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::time::SystemTime;
+use std::{fs, io};
 
-fn get_modified_time(file: &str) -> SystemTime {
-    fs::metadata(file)
-        .expect("System not supported")
-        .modified()
-        .expect("System not supported")
-}
+use crate::config::config_types::GameConfig;
 
-fn get_created_time(file: &str) -> SystemTime {
-    fs::metadata(file)
-        .expect("System not supported")
-        .created()
-        .expect("System not supported")
-}
+use super::backup_types::BackupState;
+
+// pub fn get_backup_state(config: &GameConfig) -> Result<BackupState, io::Error> {
+//     // Check save files
+//     let root_path = PathBuf::from(&config.root);
+
+// }
 
 pub fn get_latest_backup_time(dir: &Path) -> Option<SystemTime> {
     let dir_exists = dir.is_dir();
