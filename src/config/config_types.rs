@@ -32,8 +32,7 @@ pub struct GameConfig {
     pub name: String,
     pub save_dir: PathBuf,
     pub zip: bool,
-    pub root: PathBuf,
-    pub files: Option<Vec<String>>,
+    pub file_list: FileList,
     pub interval: i64,
     pub count: i64,
 }
@@ -56,14 +55,14 @@ impl GameConfig {
             name: name.to_owned(),
             save_dir,
             zip: zip.unwrap_or(defaults.zip),
-            root: PathBuf::from(root),
-            files,
+            file_list: FileList::new(root, files),
             interval: interval.unwrap_or(defaults.interval),
             count: count.unwrap_or(defaults.count),
         }
     }
 }
 
+#[derive(Debug, PartialEq)]
 pub struct FileList {
     root: String,
     files: Option<Vec<String>>,
