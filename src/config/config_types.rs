@@ -123,15 +123,6 @@ impl<'a> Iterator for FileListIterator<'a> {
                     return None;
                 }
             }
-
-            // let next = self.dir_iterators.last();
-            // if next.is_none() {
-            //     return None;
-            // }
-            // let next_entry = next.unwrap().next();
-            // while next_entry.is_none() {
-            //     self.dir_iterators.pop();
-            // }
         } else {
             let files = self.file_list.files.as_ref().unwrap();
             if self.file_index >= files.len() {
