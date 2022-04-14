@@ -1,13 +1,16 @@
 use std::fs::File;
 use std::io::{self, BufReader};
 
+use serde_yaml::Value;
+
 use super::config_types::{GameConfig, SharedConfig};
 
 const SAVE: &str = "save_root";
 const ZIP: &str = "zip";
 const COUNT: &str = "count";
 const ROOT: &str = "root";
-const FILES: &str = "files";
+const INCLUDE: &str = "include";
+const EXCLUDE: &str = "exclude";
 const INTERVAL: &str = "interval";
 
 const SHARED_FIELDS: &[&str] = &[SAVE, ZIP, COUNT, INTERVAL];
@@ -30,6 +33,19 @@ pub fn read_config<R: io::Read>(reader: &mut R) -> Vec<GameConfig> {
 
     let mut configs: Vec<GameConfig> = Vec::new();
 
+    fn collect_string_sequence(sequence: &Value) -> Option<Vec<String>> {
+        if let Some(sequence) = sequence.as_sequence() {
+            return Some(
+                sequence
+                    .iter()
+                    .map(|x| x.as_str().expect("Invalid file in config file").to_string())
+                    .collect::<Vec<String>>(),
+            );
+        } else {
+            return None;
+        }
+    }
+
     for field in config.as_mapping().unwrap().iter() {
         if SHARED_FIELDS.contains(&field.0.as_str().expect("Invalid field in config file")) {
             continue;
@@ -43,17 +59,9 @@ pub fn read_config<R: io::Read>(reader: &mut R) -> Vec<GameConfig> {
 
         let root = field.1[ROOT].as_str().expect("Invalid root in config file");
 
-        let files_seq = field.1[FILES]
-            .as_sequence()
-            .unwrap_or(&Vec::new())
-            .iter()
-            .map(|x| x.as_str().expect("Invalid file in config file").to_string())
-            .collect::<Vec<String>>();
-        let files = if files_seq.len() > 0 {
-            Some(files_seq)
-        } else {
-            None
-        };
+        let include = collect_string_sequence(&field.1[INCLUDE]);
+
+        let exclude = collect_string_sequence(&field.1[EXCLUDE]);
 
         let count = field.1[COUNT].as_i64();
 
@@ -64,7 +72,8 @@ pub fn read_config<R: io::Read>(reader: &mut R) -> Vec<GameConfig> {
             save_dir,
             zip,
             root,
-            files,
+            include,
+            exclude,
             interval,
             count,
             &shared_config,
@@ -84,7 +93,7 @@ TESTS
 mod tests {
     use std::path::PathBuf;
 
-    use crate::config::config_types::GameConfig;
+    use crate::config::config_types::{FileList, GameConfig};
 
     #[test]
     fn test_config_no_defaults() {
@@ -109,8 +118,11 @@ elden-ring:
                 name: "elden-ring".to_owned(),
                 save_dir: PathBuf::from("~/Documents/elden-ring-backups/elden-ring"),
                 zip: true,
-                root: PathBuf::from("%APPDATA%/EldenRing/12345"),
-                files: Some(vec!["ER0000.sl2".to_owned()]),
+                file_list: FileList::new(
+                    "%APPDATA%/EldenRing/12345",
+                    Some(vec!["ER0000.sl2".to_owned()]),
+                    None
+                ),
                 interval: 30,
                 count: 6
             }]
@@ -135,8 +147,7 @@ elden-ring:
                 name: "elden-ring".to_owned(),
                 save_dir: PathBuf::from("~/save-game-backups/elden-ring"),
                 zip: true,
-                root: PathBuf::from("%APPDATA%/EldenRing/12345"),
-                files: None,
+                file_list: FileList::new("%APPDATA%/EldenRing/12345", None, None),
                 interval: 60,
                 count: 10
             }]
