@@ -1,6 +1,5 @@
 use std::{
     fs::{self, ReadDir},
-    io,
     path::PathBuf,
 };
 

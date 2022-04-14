@@ -106,7 +106,7 @@ count: 10
 elden-ring:
   root: "%APPDATA%/EldenRing/12345"
   save_root: ~/Documents/elden-ring-backups/
-  files:
+  include:
     - ER0000.sl2
   interval: 30
   count: 6 
