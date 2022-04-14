@@ -86,13 +86,13 @@ impl<'a> IntoIterator for &'a FileList {
         FileListIterator {
             file_list: &self,
             file_index: 0,
-            dir_iterator: None,
+            dir_iterators: vec![fs::read_dir(&self.root).unwrap()],
         }
     }
 }
 
 pub struct FileListIterator<'a> {
-    dir_iterator: Option<ReadDir>,
+    dir_iterators: Vec<ReadDir>,
     file_index: usize,
     file_list: &'a FileList,
 }
@@ -101,18 +101,37 @@ impl<'a> Iterator for FileListIterator<'a> {
     type Item = PathBuf;
     fn next(&mut self) -> Option<Self::Item> {
         if self.file_list.files.is_none() {
-            if self.dir_iterator.is_none() {
-                self.dir_iterator = fs::read_dir(&self.file_list.root).ok();
+            loop {
+                if let Some(read_dir) = self.dir_iterators.last_mut() {
+                    let next = read_dir.next();
+                    if let Some(entry) = next {
+                        if let Ok(dir_entry) = entry {
+                            let path = dir_entry.path();
+                            if path.is_dir() {
+                                let nested_iter = fs::read_dir(path);
+                                if let Ok(nested_iter) = nested_iter {
+                                    self.dir_iterators.push(nested_iter);
+                                }
+                            } else {
+                                return Some(dir_entry.path());
+                            }
+                        }
+                    } else {
+                        self.dir_iterators.pop();
+                    }
+                } else {
+                    return None;
+                }
             }
-            let iterator = self.dir_iterator.as_mut().unwrap();
-            let file = iterator.next();
-            match file {
-                Some(x) => match x {
-                    Ok(x) => Some(x.path()),
-                    _ => None,
-                },
-                _ => None,
-            }
+
+            // let next = self.dir_iterators.last();
+            // if next.is_none() {
+            //     return None;
+            // }
+            // let next_entry = next.unwrap().next();
+            // while next_entry.is_none() {
+            //     self.dir_iterators.pop();
+            // }
         } else {
             let files = self.file_list.files.as_ref().unwrap();
             if self.file_index >= files.len() {
@@ -137,7 +156,7 @@ mod test {
         let file_list = FileList::new("./test/test_latest/file", None);
         let files: Vec<PathBuf> = file_list.into_iter().collect();
         println!("{:?}", files);
-        assert_eq!(files.len(), 3);
+        assert_eq!(files.len(), 6);
     }
 
     #[test]
