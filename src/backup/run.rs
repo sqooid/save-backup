@@ -102,21 +102,39 @@ fn create_backup(config: &GameConfig) -> Result<(), Box<dyn Error>> {
 mod tests {
     use std::{error, path::PathBuf};
 
-    use crate::config::config_types::{FileList, GameConfig};
+    use crate::{
+        backup::file_data::get_backup_state,
+        config::config_types::{FileList, GameConfig},
+    };
 
-    use super::create_backup;
+    use super::{create_backup, remove_backup};
 
     #[test]
     fn test_backup() -> Result<(), Box<dyn error::Error>> {
         let config = GameConfig {
-            count: 10,
+            count: 3,
+            file_list: FileList::new("test/test_backup/src", None, None),
+            interval: 30,
+            name: "thing".to_owned(),
+            save_dir: PathBuf::from("test/test_backup/dst"),
+            zip: true,
+        };
+        create_backup(&config)?;
+        Ok(())
+    }
+
+    #[test]
+    fn test_remove() -> Result<(), Box<dyn error::Error>> {
+        let config = GameConfig {
+            count: 3,
             file_list: FileList::new("test/test_backup/src", None, None),
             interval: 30,
             name: "thing".to_owned(),
             save_dir: PathBuf::from("test/test_backup/dst"),
             zip: false,
         };
-        create_backup(&config)?;
+        let state = get_backup_state(&config)?;
+        remove_backup(&state)?;
         Ok(())
     }
 }
