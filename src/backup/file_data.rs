@@ -64,7 +64,7 @@ pub fn get_backup_state(config: &GameConfig) -> Result<BackupState, Box<dyn erro
 
 #[cfg(test)]
 mod test {
-    use std::{fs, io, path::PathBuf};
+    use std::{fs, path::PathBuf};
 
     use crate::{
         backup::backup_types::BackupState,

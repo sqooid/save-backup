@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use chrono::{format::Parsed, NaiveDateTime, ParseError};
+use chrono::{ParseError};
 
 use super::constants::DATE_FORMAT;
 
