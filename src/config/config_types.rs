@@ -9,16 +9,16 @@ use crate::utils::path::normalize_paths;
 pub struct SharedConfig {
     pub save_root: PathBuf,
     pub zip: bool,
-    pub count: i64,
-    pub interval: i64,
+    pub count: u64,
+    pub interval: u64,
 }
 
 impl SharedConfig {
     pub fn new(
         save_root: Option<&str>,
         zip: Option<bool>,
-        count: Option<i64>,
-        interval: Option<i64>,
+        count: Option<u64>,
+        interval: Option<u64>,
     ) -> SharedConfig {
         SharedConfig {
             save_root: PathBuf::from(save_root.unwrap_or("~/Documents/save-backups")),
@@ -35,8 +35,8 @@ pub struct GameConfig {
     pub save_dir: PathBuf,
     pub zip: bool,
     pub file_list: FileList,
-    pub interval: i64,
-    pub count: i64,
+    pub interval: u64,
+    pub count: u64,
 }
 
 impl GameConfig {
@@ -47,8 +47,8 @@ impl GameConfig {
         root: &str,
         include: Option<Vec<String>>,
         exclude: Option<Vec<String>>,
-        interval: Option<i64>,
-        count: Option<i64>,
+        interval: Option<u64>,
+        count: Option<u64>,
         defaults: &SharedConfig,
     ) -> GameConfig {
         let mut save_dir = PathBuf::from(save_dir.unwrap_or(defaults.save_root.to_str().unwrap()));
@@ -67,7 +67,7 @@ impl GameConfig {
 
 #[derive(Debug, PartialEq)]
 pub struct FileList {
-    root: String,
+    pub root: String,
     include: Option<Vec<PathBuf>>,
     exclude: Option<Vec<PathBuf>>,
 }
@@ -171,6 +171,7 @@ mod test {
     fn test_file_list_only_root() {
         let file_list = FileList::new("./test/test_latest/file", None, None);
         let files: Vec<PathBuf> = file_list.into_iter().collect();
+        println!("{:?}", files);
         assert_eq!(files.len(), 6);
     }
 

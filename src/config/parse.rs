@@ -27,8 +27,8 @@ pub fn read_config<R: io::Read>(reader: &mut R) -> Vec<GameConfig> {
     let shared_config = SharedConfig::new(
         config[SAVE].as_str(),
         config[ZIP].as_bool(),
-        config[COUNT].as_i64(),
-        config[INTERVAL].as_i64(),
+        config[COUNT].as_u64(),
+        config[INTERVAL].as_u64(),
     );
 
     let mut configs: Vec<GameConfig> = Vec::new();
@@ -63,9 +63,9 @@ pub fn read_config<R: io::Read>(reader: &mut R) -> Vec<GameConfig> {
 
         let exclude = collect_string_sequence(&field.1[EXCLUDE]);
 
-        let count = field.1[COUNT].as_i64();
+        let count = field.1[COUNT].as_u64();
 
-        let interval = field.1[INTERVAL].as_i64();
+        let interval = field.1[INTERVAL].as_u64();
 
         let game_config = GameConfig::with_defaults(
             name,

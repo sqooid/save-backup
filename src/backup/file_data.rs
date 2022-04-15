@@ -19,6 +19,7 @@ pub fn get_backup_state(config: &GameConfig) -> Result<BackupState, io::Error> {
     let mut latest_backup_time = SystemTime::UNIX_EPOCH;
     let mut oldest_backup_path: Option<PathBuf> = None;
     let mut oldest_backup_time = SystemTime::now();
+    let mut backup_count: i32 = 0;
     for file in config
         .save_dir
         .read_dir()?
@@ -41,11 +42,13 @@ pub fn get_backup_state(config: &GameConfig) -> Result<BackupState, io::Error> {
         if created_time > latest_backup_time {
             latest_backup_time = created_time;
         }
+        backup_count += 1;
     }
     Ok(BackupState::new(
         last_modified_time,
         latest_backup_time,
         oldest_backup_path,
+        backup_count,
     ))
 }
 
@@ -76,7 +79,12 @@ mod test {
         let oldest_backup_path = Some(PathBuf::from(r"./test/test_state/save\file1"));
         assert_eq!(
             state,
-            BackupState::new(last_modified_time, latest_backup_time, oldest_backup_path)
+            BackupState::new(
+                last_modified_time,
+                latest_backup_time,
+                oldest_backup_path,
+                2
+            )
         );
         Ok(())
     }

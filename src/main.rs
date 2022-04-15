@@ -1,4 +1,4 @@
-use std::{path::Path, thread};
+use std::{io, path::Path, thread};
 
 mod config {
     pub mod config_types;
@@ -15,7 +15,8 @@ mod utils {
 
 fn main() -> Result<(), io::Error> {
     let configs = config::parse::read_config_from_file("test-1.yaml");
-    for config in configs {
-        thread::spawn(|| {});
-    }
+    // for config in configs {
+    //     thread::spawn(|| {});
+    // }
+    Ok(())
 }
