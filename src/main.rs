@@ -19,7 +19,7 @@ mod utils {
 }
 
 fn main() -> GenericResult<()> {
-    let configs = config::parse::read_config_from_file("test-config.yaml");
+    let configs = config::parse::read_config_from_file("config.yaml");
     let mut threads = vec![];
     for config in configs {
         let thread = thread::spawn(move || {
