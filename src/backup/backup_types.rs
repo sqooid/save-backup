@@ -5,7 +5,7 @@ pub struct BackupState {
     pub last_modified_time: SystemTime,
     pub latest_backup_time: SystemTime,
     pub oldest_backup_path: Option<PathBuf>,
-    pub backup_count: i32,
+    pub backup_count: u64,
 }
 
 impl BackupState {
@@ -13,7 +13,7 @@ impl BackupState {
         last_modified_time: SystemTime,
         latest_backup_time: SystemTime,
         oldest_backup_path: Option<PathBuf>,
-        backup_count: i32,
+        backup_count: u64,
     ) -> Self {
         Self {
             last_modified_time,

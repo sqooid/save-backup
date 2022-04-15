@@ -11,7 +11,7 @@ use zip::{write::FileOptions, ZipWriter};
 
 use crate::config::config_types::GameConfig;
 
-use super::file_data::get_backup_state;
+use super::{backup_types::BackupState, file_data::get_backup_state};
 
 pub fn start_backup_loop(config: &GameConfig) -> Result<(), Box<dyn Error>> {
     // Initial check
@@ -27,12 +27,13 @@ pub fn start_backup_loop(config: &GameConfig) -> Result<(), Box<dyn Error>> {
         let state = get_backup_state(config)?;
 
         // Backup required
-        if state.last_modified_time > state.latest_backup_time {}
+        if state.last_modified_time > state.latest_backup_time {
+            create_backup(config)?;
+        }
+        if state.backup_count >= config.count {
+            remove_backup(&state)?;
+        }
     }
-
-    // Need to do stuff
-
-    // todo!();
 }
 
 fn path_to_string(path: &Path) -> Result<String, io::Error> {
@@ -46,7 +47,18 @@ fn path_to_string(path: &Path) -> Result<String, io::Error> {
         .to_owned())
 }
 
-pub fn backup(config: &GameConfig) -> Result<(), Box<dyn Error>> {
+fn remove_backup(state: &BackupState) -> Result<(), io::Error> {
+    let extension = state.oldest_backup_path.as_ref().unwrap().extension();
+    if extension.is_none() {
+        fs::remove_dir_all(state.oldest_backup_path.as_ref().unwrap())?;
+    } else if extension.unwrap() == "zip" {
+        fs::remove_file(state.oldest_backup_path.as_ref().unwrap())?;
+    }
+
+    Ok(())
+}
+
+fn create_backup(config: &GameConfig) -> Result<(), Box<dyn Error>> {
     let time_format = chrono::offset::Local::now().format(r"%Y-%m-%d_%H-%M-%S");
     let backup_string = format!("{}_{}", &config.name, time_format);
 
@@ -92,7 +104,7 @@ mod tests {
 
     use crate::config::config_types::{FileList, GameConfig};
 
-    use super::backup;
+    use super::create_backup;
 
     #[test]
     fn test_backup() -> Result<(), Box<dyn error::Error>> {
@@ -104,7 +116,7 @@ mod tests {
             save_dir: PathBuf::from("test/test_backup/dst"),
             zip: false,
         };
-        backup(&config)?;
+        create_backup(&config)?;
         Ok(())
     }
 }

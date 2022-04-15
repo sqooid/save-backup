@@ -19,7 +19,7 @@ pub fn get_backup_state(config: &GameConfig) -> Result<BackupState, io::Error> {
     let mut latest_backup_time = SystemTime::UNIX_EPOCH;
     let mut oldest_backup_path: Option<PathBuf> = None;
     let mut oldest_backup_time = SystemTime::now();
-    let mut backup_count: i32 = 0;
+    let mut backup_count: u64 = 0;
     for file in config
         .save_dir
         .read_dir()?
