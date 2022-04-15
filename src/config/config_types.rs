@@ -10,7 +10,7 @@ pub struct SharedConfig {
     pub save_root: PathBuf,
     pub zip: bool,
     pub count: u64,
-    pub interval: u64,
+    pub interval: i64,
 }
 
 impl SharedConfig {
@@ -18,7 +18,7 @@ impl SharedConfig {
         save_root: Option<&str>,
         zip: Option<bool>,
         count: Option<u64>,
-        interval: Option<u64>,
+        interval: Option<i64>,
     ) -> SharedConfig {
         SharedConfig {
             save_root: PathBuf::from(save_root.unwrap_or("./save-backups")),
@@ -35,7 +35,7 @@ pub struct GameConfig {
     pub save_dir: PathBuf,
     pub zip: bool,
     pub file_list: FileList,
-    pub interval: u64,
+    pub interval: i64,
     pub count: u64,
 }
 
@@ -47,7 +47,7 @@ impl GameConfig {
         root: &str,
         include: Option<Vec<String>>,
         exclude: Option<Vec<String>>,
-        interval: Option<u64>,
+        interval: Option<i64>,
         count: Option<u64>,
         defaults: &SharedConfig,
     ) -> GameConfig {

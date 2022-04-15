@@ -10,7 +10,9 @@ mod backup {
     pub mod run;
 }
 mod utils {
+    pub mod constants;
     pub mod path;
+    pub mod utils;
 }
 
 fn main() -> Result<(), io::Error> {

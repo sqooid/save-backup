@@ -9,17 +9,22 @@ use std::{
 
 use zip::{write::FileOptions, ZipWriter};
 
-use crate::config::config_types::GameConfig;
+use crate::{
+    config::config_types::GameConfig,
+    utils::{constants::DATE_FORMAT, utils::time_now},
+};
 
 use super::{backup_types::BackupState, file_data::get_backup_state};
 
 pub fn start_backup_loop(config: &GameConfig) -> Result<(), Box<dyn Error>> {
     // Initial check
     let state = get_backup_state(config)?;
-    let elapsed_minutes = state.latest_backup_time.elapsed()?.as_secs() / 60;
+    let elapsed_minutes = (time_now() - state.latest_backup_time) / 60;
     if elapsed_minutes < config.interval {
         thread::sleep(Duration::from_secs(
-            (config.interval - elapsed_minutes) * 60,
+            ((config.interval - elapsed_minutes) * 60)
+                .try_into()
+                .unwrap(),
         ));
     }
 
@@ -59,7 +64,7 @@ fn remove_backup(state: &BackupState) -> Result<(), io::Error> {
 }
 
 fn create_backup(config: &GameConfig) -> Result<(), Box<dyn Error>> {
-    let time_format = chrono::offset::Local::now().format(r"%Y-%m-%d_%H-%M-%S");
+    let time_format = chrono::offset::Local::now().format(DATE_FORMAT);
     let backup_string = format!("{}_{}", &config.name, time_format);
 
     fs::create_dir_all(&config.save_dir)?;
@@ -131,7 +136,7 @@ mod tests {
             interval: 30,
             name: "thing".to_owned(),
             save_dir: PathBuf::from("test/test_backup/dst"),
-            zip: false,
+            zip: true,
         };
         let state = get_backup_state(&config)?;
         remove_backup(&state)?;
