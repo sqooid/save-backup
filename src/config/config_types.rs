@@ -21,7 +21,7 @@ impl SharedConfig {
         interval: Option<u64>,
     ) -> SharedConfig {
         SharedConfig {
-            save_root: PathBuf::from(save_root.unwrap_or("~/Documents/save-backups")),
+            save_root: PathBuf::from(save_root.unwrap_or("./save-backups")),
             zip: zip.unwrap_or(true),
             count: count.unwrap_or(5),
             interval: interval.unwrap_or(30),
