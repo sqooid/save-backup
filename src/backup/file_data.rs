@@ -22,6 +22,7 @@ pub fn get_backup_state(config: &GameConfig) -> Result<BackupState, Box<dyn erro
     let mut oldest_backup_path: Option<PathBuf> = None;
     let mut oldest_backup_time: i64 = time_now();
     let mut backup_count: u64 = 0;
+    fs::create_dir_all(&config.save_dir)?;
     for file in config
         .save_dir
         .read_dir()?
@@ -40,7 +41,7 @@ pub fn get_backup_state(config: &GameConfig) -> Result<BackupState, Box<dyn erro
         if filename.ends_with(".zip") {
             filename = filename.strip_suffix(".zip").unwrap();
         }
-        let created_time = get_backup_time(&config.name, filename)?;
+        let created_time = get_backup_time(&config.name, &filename)?;
         if created_time < oldest_backup_time {
             oldest_backup_path = Some(file.path());
             oldest_backup_time = created_time;

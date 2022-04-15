@@ -1,4 +1,7 @@
-use std::{io, path::Path, thread};
+use std::thread;
+
+use backup::run::start_backup_loop;
+use utils::utils::GenericResult;
 
 mod config {
     pub mod config_types;
@@ -15,10 +18,17 @@ mod utils {
     pub mod utils;
 }
 
-fn main() -> Result<(), io::Error> {
-    let configs = config::parse::read_config_from_file("test-1.yaml");
-    // for config in configs {
-    //     thread::spawn(|| {});
-    // }
+fn main() -> GenericResult<()> {
+    let configs = config::parse::read_config_from_file("test-config.yaml");
+    let mut threads = vec![];
+    for config in configs {
+        let thread = thread::spawn(move || {
+            let _ = start_backup_loop(&config);
+        });
+        threads.push(thread);
+    }
+    for thread in threads {
+        let _ = thread.join();
+    }
     Ok(())
 }

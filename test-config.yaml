@@ -1,0 +1,5 @@
+thing:
+  root: "./test/test_full/src"
+  save_root: "./test/test_full/dst"
+  interval: 1
+  count: 3

@@ -18,7 +18,7 @@ use super::{backup_types::BackupState, file_data::get_backup_state};
 
 pub fn start_backup_loop(config: &GameConfig) -> Result<(), Box<dyn Error>> {
     // Initial check
-    let state = get_backup_state(config)?;
+    let state = get_backup_state(&config)?;
     let elapsed_minutes = (time_now() - state.latest_backup_time) / 60;
     if elapsed_minutes < config.interval {
         thread::sleep(Duration::from_secs(
@@ -29,15 +29,18 @@ pub fn start_backup_loop(config: &GameConfig) -> Result<(), Box<dyn Error>> {
     }
 
     loop {
-        let state = get_backup_state(config)?;
+        let state = get_backup_state(&config)?;
 
         // Backup required
         if state.last_modified_time > state.latest_backup_time {
-            create_backup(config)?;
+            create_backup(&config)?;
         }
         if state.backup_count >= config.count {
             remove_backup(&state)?;
         }
+        thread::sleep(Duration::from_secs(
+            (config.interval * 60).try_into().unwrap(),
+        ));
     }
 }
 
