@@ -2,9 +2,9 @@ use std::{
     error::Error,
     fs,
     io::{self, BufReader, Read, Write},
-    path::{Path, PathBuf},
+    path::Path,
     thread,
-    time::{Duration, SystemTime},
+    time::Duration,
 };
 
 use zip::{write::FileOptions, ZipWriter};
@@ -18,6 +18,7 @@ use super::{backup_types::BackupState, file_data::get_backup_state};
 
 pub fn start_backup_loop(config: &GameConfig) -> Result<(), Box<dyn Error>> {
     // Initial check
+    fs::create_dir_all(&config.save_dir)?; // Required to check for files
     let state = get_backup_state(&config)?;
     let elapsed_minutes = (time_now() - state.latest_backup_time) / 60;
     if elapsed_minutes < config.interval {

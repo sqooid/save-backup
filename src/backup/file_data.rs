@@ -1,6 +1,6 @@
-use std::path::{Path, PathBuf};
-use std::time::{self, SystemTime, UNIX_EPOCH};
-use std::{error, fs, io};
+use std::error;
+use std::path::PathBuf;
+use std::time::{SystemTime, UNIX_EPOCH};
 
 use crate::config::config_types::GameConfig;
 use crate::utils::path::get_backup_time;
@@ -22,7 +22,6 @@ pub fn get_backup_state(config: &GameConfig) -> Result<BackupState, Box<dyn erro
     let mut oldest_backup_path: Option<PathBuf> = None;
     let mut oldest_backup_time: i64 = time_now();
     let mut backup_count: u64 = 0;
-    fs::create_dir_all(&config.save_dir)?;
     for file in config
         .save_dir
         .read_dir()?
