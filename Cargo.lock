@@ -464,7 +464,6 @@ dependencies = [
  "serde",
  "serde_yaml",
  "sysinfo",
- "winapi",
  "zip",
 ]
 
