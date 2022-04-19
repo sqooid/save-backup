@@ -4,7 +4,7 @@ use std::{
     path::PathBuf,
 };
 
-use crate::utils::path::normalize_paths;
+use crate::utils::{log::LogExpectResult, path::normalize_paths};
 
 #[derive(Debug, PartialEq)]
 pub struct SharedConfig {
@@ -80,25 +80,26 @@ impl GameConfig {
 
 #[derive(Debug, PartialEq)]
 pub struct FileList {
-    pub root: String,
+    pub root: PathBuf,
     include: Option<Vec<PathBuf>>,
     exclude: Option<Vec<PathBuf>>,
 }
 
 impl FileList {
     pub fn new(root: &str, include: Option<Vec<String>>, exclude: Option<Vec<String>>) -> Self {
+        let root_path = PathBuf::from(root);
         let exclude = if let Some(exclude) = exclude {
-            Some(normalize_paths(exclude))
+            Some(exclude.iter().map(|x| root_path.join(x)).collect())
         } else {
             None
         };
         let include = if let Some(include) = include {
-            Some(normalize_paths(include))
+            Some(include.iter().map(|x| PathBuf::from(x)).collect())
         } else {
             None
         };
         Self {
-            root: root.to_owned(),
+            root: PathBuf::from(root),
             include,
             exclude,
         }
@@ -112,8 +113,13 @@ impl<'a> IntoIterator for &'a FileList {
     fn into_iter(self) -> Self::IntoIter {
         FileListIterator {
             file_list: &self,
-            file_index: 0,
-            dir_iterators: vec![fs::read_dir(&self.root).unwrap()],
+            dir_iterators: if self.include.is_none() {
+                vec![fs::read_dir(&self.root).unwrap()]
+            } else {
+                vec![]
+            },
+            include_files: vec![],
+            initialized: false,
         }
     }
 }
@@ -121,55 +127,70 @@ impl<'a> IntoIterator for &'a FileList {
 pub struct FileListIterator<'a> {
     file_list: &'a FileList,
     dir_iterators: Vec<ReadDir>,
-    file_index: usize,
+    include_files: Vec<PathBuf>,
+    initialized: bool,
 }
 
 impl<'a> Iterator for FileListIterator<'a> {
     type Item = PathBuf;
     fn next(&mut self) -> Option<Self::Item> {
-        if self.file_list.include.is_none() {
-            loop {
-                if let Some(read_dir) = self.dir_iterators.last_mut() {
-                    let next = read_dir.next();
-
-                    if let Some(entry) = next {
-                        if let Ok(dir_entry) = entry {
-                            let path = dir_entry.path();
-                            let exclude = &self.file_list.exclude;
-
-                            // Check if excluded
-                            if let Some(exclude) = exclude {
-                                if exclude.contains(&path) {
-                                    continue;
-                                }
-                            }
-                            if path.is_dir() {
-                                let nested_iter = fs::read_dir(path);
-
-                                if let Ok(nested_iter) = nested_iter {
-                                    self.dir_iterators.push(nested_iter);
-                                }
-                            } else {
-                                let path = dir_entry.path();
-                                return Some(path);
-                            }
-                        }
+        // Add include directory iterators if present
+        if !self.initialized {
+            if let Some(include_list) = &self.file_list.include {
+                for path in include_list {
+                    let path = self.file_list.root.join(path);
+                    if path.is_dir() {
+                        let iterator = path
+                            .read_dir()
+                            .log_expect(format!("Failed to open directory {:?}", &path));
+                        self.dir_iterators.push(iterator);
                     } else {
-                        self.dir_iterators.pop();
+                        self.include_files.push(path);
                     }
-                } else {
-                    return None;
                 }
             }
-        } else {
-            let files = self.file_list.include.as_ref().unwrap();
-            if self.file_index >= files.len() {
-                return None;
+            self.initialized = true;
+        }
+        loop {
+            if let Some(mut read_dir) = self.dir_iterators.pop() {
+                let next = read_dir.next();
+
+                if let Some(entry) = next {
+                    if let Ok(dir_entry) = entry {
+                        let path = dir_entry.path();
+                        let exclude = &self.file_list.exclude;
+
+                        // Check if excluded
+                        if let Some(exclude) = exclude {
+                            if exclude.contains(&path) {
+                                self.dir_iterators.push(read_dir);
+                                continue;
+                            }
+                        }
+
+                        // Add to iterator queue if directory
+                        if path.is_dir() {
+                            let nested_iter = fs::read_dir(&path);
+
+                            if let Ok(nested_iter) = nested_iter {
+                                self.dir_iterators.push(read_dir);
+                                self.dir_iterators.push(nested_iter);
+                            }
+                        } else {
+                            let path = dir_entry.path();
+                            self.dir_iterators.push(read_dir);
+                            return Some(path);
+                        }
+                    }
+                } else {
+                    continue;
+                }
+            } else {
+                if self.file_list.include.is_none() {
+                    return None;
+                }
+                return self.include_files.pop();
             }
-            let root_path = PathBuf::from(&self.file_list.root);
-            let file_path = root_path.as_path().join(&files[self.file_index]);
-            self.file_index += 1;
-            Some(file_path)
         }
     }
 }
@@ -182,24 +203,44 @@ mod test {
 
     #[test]
     fn test_file_list_only_root() {
-        let file_list = FileList::new("./test/test_latest/file", None, None);
-        let files: Vec<PathBuf> = file_list.into_iter().collect();
-        println!("{:?}", files);
-        assert_eq!(files.len(), 6);
+        let file_list = FileList::new("./test/test_list", None, None);
+        let mut files: Vec<PathBuf> = file_list.into_iter().collect();
+        let mut expected = vec![
+            PathBuf::from("./test/test_list/file1"),
+            PathBuf::from("./test/test_list/folder3/file4"),
+            PathBuf::from("./test/test_list/folder1/file2"),
+            PathBuf::from("./test/test_list/folder1/folder2/file3"),
+        ];
+        files.sort();
+        expected.sort();
+        assert_eq!(files, expected)
     }
 
     #[test]
     fn test_file_list_excludes() {
-        let exclude = vec!["./test/test_latest/file/nested/more_nested".to_owned()];
-        let file_list = FileList::new("./test/test_latest/file", None, Some(exclude));
-        let files: Vec<PathBuf> = file_list.into_iter().collect();
-        println!("{:?}", files);
-        assert_eq!(files.len(), 5);
+        let exclude = vec!["folder3".to_owned()];
+        let file_list = FileList::new("./test/test_list", None, Some(exclude));
+        let mut files: Vec<PathBuf> = file_list.into_iter().collect();
+        let mut expected = vec![
+            PathBuf::from("./test/test_list/file1"),
+            PathBuf::from("./test/test_list/folder1/file2"),
+            PathBuf::from("./test/test_list/folder1/folder2/file3"),
+        ];
+        files.sort();
+        expected.sort();
+        assert_eq!(files, expected)
+    }
+    #[test]
+    fn test_wtf() {
+        let path1 = PathBuf::from("/");
+        let path2 = PathBuf::from("\\");
+
+        assert_eq!(path1, path2)
     }
 
     #[test]
     fn test_file_list_only_root_twice() {
-        let file_list = FileList::new("./test/test_latest/file", None, None);
+        let file_list = FileList::new("./test/test_list", None, None);
         let files: Vec<PathBuf> = file_list.into_iter().collect();
         let files2: Vec<PathBuf> = file_list.into_iter().collect();
         assert_eq!(files, files2);
@@ -207,12 +248,16 @@ mod test {
 
     #[test]
     fn test_file_list_list() {
-        let file_list = FileList::new(
-            "./test/test_latest/file",
-            Some(vec!["file-1.txt".to_string()]),
-            None,
-        );
-        let files: Vec<PathBuf> = file_list.into_iter().collect();
-        assert_eq!(files.len(), 1);
+        let include = vec!["folder1".to_string(), "file1".to_string()];
+        let exclude = vec!["folder1/folder2".to_string()];
+        let file_list = FileList::new("./test/test_list", Some(include), Some(exclude));
+        let mut files: Vec<PathBuf> = file_list.into_iter().collect();
+        let mut expected = vec![
+            PathBuf::from("./test/test_list/file1"),
+            PathBuf::from("./test/test_list/folder1/file2"),
+        ];
+        files.sort();
+        expected.sort();
+        assert_eq!(files, expected)
     }
 }
