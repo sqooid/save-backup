@@ -1,12 +1,12 @@
-Reading shared config
-SharedConfig {
+2022-04-19 16:53:14.332229500 +10:00: Reading shared config
+2022-04-19 16:53:14.333075400 +10:00: SharedConfig {
     save_root: "./save-backups",
     zip: true,
     count: 5,
     interval: 30,
 }
-Reading individual configs
-GameConfig {
+2022-04-19 16:53:14.333284500 +10:00: Reading individual configs
+2022-04-19 16:53:14.333495400 +10:00: GameConfig {
     name: "elden-ring",
     save_dir: "./save-backups\\elden-ring",
     zip: true,

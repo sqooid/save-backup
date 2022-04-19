@@ -2,7 +2,11 @@
 use std::thread;
 
 use backup::run::start_backup_loop;
-use utils::{log::reset_log, process::replace_instance, utils::GenericResult};
+use utils::{
+    log::{log, reset_log},
+    process::replace_instance,
+    utils::GenericResult,
+};
 
 mod config {
     pub mod config_types;
@@ -22,6 +26,9 @@ mod utils {
 }
 
 fn main() -> GenericResult<()> {
+    std::panic::set_hook(Box::new(|x| {
+        log(x);
+    }));
     reset_log()?;
     replace_instance();
 
