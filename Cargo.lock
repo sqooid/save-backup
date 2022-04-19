@@ -349,6 +349,7 @@ dependencies = [
  "chrono",
  "serde",
  "serde_yaml",
+ "winapi",
  "zip",
 ]
 
