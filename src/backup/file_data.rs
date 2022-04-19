@@ -3,6 +3,7 @@ use std::path::PathBuf;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use crate::config::config_types::GameConfig;
+use crate::utils::log::LogExpectResult;
 use crate::utils::path::get_backup_time;
 use crate::utils::utils::time_now;
 
@@ -12,7 +13,10 @@ pub fn get_backup_state(config: &GameConfig) -> Result<BackupState, Box<dyn erro
     // Check save files
     let mut last_modified_time = SystemTime::UNIX_EPOCH;
     for file in config.file_list.into_iter() {
-        let last_modified = file.metadata()?.modified()?;
+        let last_modified = file
+            .metadata()
+            .log_expect(format!("Failed to access file {}", file.to_str().unwrap()))
+            .modified()?;
         if last_modified > last_modified_time {
             last_modified_time = last_modified;
         }
@@ -24,7 +28,11 @@ pub fn get_backup_state(config: &GameConfig) -> Result<BackupState, Box<dyn erro
     let mut backup_count: u64 = 0;
     for file in config
         .save_dir
-        .read_dir()?
+        .read_dir()
+        .log_expect(format!(
+            "Failed to open directory {}",
+            &config.save_dir.to_str().unwrap()
+        ))
         .filter_map(|x| x.ok())
         .filter(|x| {
             x.to_owned()

@@ -1,3 +1,4 @@
+use core::fmt;
 use std::{
     fs::{self, ReadDir},
     path::PathBuf,
@@ -11,6 +12,12 @@ pub struct SharedConfig {
     pub zip: bool,
     pub count: u64,
     pub interval: i64,
+}
+
+impl fmt::Display for SharedConfig {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{:#?}", self)
+    }
 }
 
 impl SharedConfig {
@@ -37,6 +44,12 @@ pub struct GameConfig {
     pub file_list: FileList,
     pub interval: i64,
     pub count: u64,
+}
+
+impl fmt::Display for GameConfig {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{:#?}", self)
+    }
 }
 
 impl GameConfig {

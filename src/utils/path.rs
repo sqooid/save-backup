@@ -1,8 +1,8 @@
 use std::path::PathBuf;
 
-use chrono::{ParseError};
+use chrono::ParseError;
 
-use super::constants::DATE_FORMAT;
+use super::{constants::DATE_FORMAT, log::LogExpectResult};
 
 pub fn normalize_paths(paths: Vec<String>) -> Vec<PathBuf> {
     paths
@@ -13,7 +13,9 @@ pub fn normalize_paths(paths: Vec<String>) -> Vec<PathBuf> {
 
 pub fn get_backup_time(name: &str, filename: &str) -> Result<i64, ParseError> {
     let date_string = &filename[(name.len() + 1)..];
-    let date = chrono::DateTime::parse_from_str(date_string, DATE_FORMAT)?.timestamp();
+    let date = chrono::DateTime::parse_from_str(date_string, DATE_FORMAT)
+        .log_expect(format!("Failed to read timestamp for {}", &filename))
+        .timestamp();
     Ok(date)
 }
 

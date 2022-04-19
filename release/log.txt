@@ -1,0 +1,24 @@
+Reading shared config
+SharedConfig {
+    save_root: "./save-backups",
+    zip: true,
+    count: 5,
+    interval: 30,
+}
+Reading individual configs
+GameConfig {
+    name: "elden-ring",
+    save_dir: "./save-backups\\elden-ring",
+    zip: true,
+    file_list: FileList {
+        root: "C:\\Users\\Lucas\\AppData\\Roaming\\EldenRing\\76561198207054704",
+        include: Some(
+            [
+                "ER0000.sl2",
+            ],
+        ),
+        exclude: None,
+    },
+    interval: 30,
+    count: 5,
+}

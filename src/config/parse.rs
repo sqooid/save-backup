@@ -3,6 +3,8 @@ use std::io::{self, BufReader};
 
 use serde_yaml::Value;
 
+use crate::utils::log::{log, LogExpectOption, LogExpectResult};
+
 use super::config_types::{GameConfig, SharedConfig};
 
 const SAVE: &str = "save_root";
@@ -16,13 +18,32 @@ const INTERVAL: &str = "interval";
 const SHARED_FIELDS: &[&str] = &[SAVE, ZIP, COUNT, INTERVAL];
 
 pub fn read_config_from_file(file: &str) -> Vec<GameConfig> {
-    let file = File::open(file).expect("Failed to open config file");
+    let file =
+        File::open(file).log_expect("Failed to find config.yaml file in application directory");
     let mut reader = BufReader::new(file);
     read_config(&mut reader)
 }
 
+fn collect_string_sequence(sequence: &Value) -> Option<Vec<String>> {
+    if let Some(sequence) = sequence.as_sequence() {
+        return Some(
+            sequence
+                .iter()
+                .map(|x| {
+                    x.as_str()
+                        .log_expect("Invalid file in config file")
+                        .to_string()
+                })
+                .collect::<Vec<String>>(),
+        );
+    } else {
+        return None;
+    }
+}
+
 pub fn read_config<R: io::Read>(reader: &mut R) -> Vec<GameConfig> {
-    let config: serde_yaml::Value = serde_yaml::from_reader(reader).expect("Invalid config");
+    log("Reading shared config");
+    let config: serde_yaml::Value = serde_yaml::from_reader(reader).log_expect("Invalid config");
 
     let shared_config = SharedConfig::new(
         config[SAVE].as_str(),
@@ -30,28 +51,17 @@ pub fn read_config<R: io::Read>(reader: &mut R) -> Vec<GameConfig> {
         config[COUNT].as_u64(),
         config[INTERVAL].as_i64(),
     );
+    log(&shared_config);
 
     let mut configs: Vec<GameConfig> = Vec::new();
 
-    fn collect_string_sequence(sequence: &Value) -> Option<Vec<String>> {
-        if let Some(sequence) = sequence.as_sequence() {
-            return Some(
-                sequence
-                    .iter()
-                    .map(|x| x.as_str().expect("Invalid file in config file").to_string())
-                    .collect::<Vec<String>>(),
-            );
-        } else {
-            return None;
-        }
-    }
-
+    log("Reading individual configs");
     for field in config.as_mapping().unwrap().iter() {
-        if SHARED_FIELDS.contains(&field.0.as_str().expect("Invalid field in config file")) {
+        if SHARED_FIELDS.contains(&field.0.as_str().log_expect("Invalid field in config file")) {
             continue;
         }
 
-        let name = field.0.as_str().expect("Invalid name in config file");
+        let name = field.0.as_str().log_expect("Invalid name in config file");
 
         let save_dir = field.1[SAVE].as_str();
 
@@ -78,7 +88,7 @@ pub fn read_config<R: io::Read>(reader: &mut R) -> Vec<GameConfig> {
             count,
             &shared_config,
         );
-
+        log(&game_config);
         configs.push(game_config);
     }
 

@@ -11,14 +11,21 @@ use zip::{write::FileOptions, ZipWriter};
 
 use crate::{
     config::config_types::GameConfig,
-    utils::{constants::DATE_FORMAT, utils::time_now},
+    utils::{
+        constants::DATE_FORMAT,
+        log::{log, LogExpectResult},
+        utils::{time_now, GenericResult},
+    },
 };
 
 use super::{backup_types::BackupState, file_data::get_backup_state};
 
 pub fn start_backup_loop(config: &GameConfig) -> Result<(), Box<dyn Error>> {
     // Initial check
-    fs::create_dir_all(&config.save_dir)?; // Required to check for files
+    fs::create_dir_all(&config.save_dir).log_expect(format!(
+        "Failed to create save directory at {}",
+        &config.save_dir.to_str().unwrap()
+    )); // Required to check for files
     let state = get_backup_state(&config)?;
     let elapsed_minutes = (time_now() - state.latest_backup_time) / 60;
     if elapsed_minutes < config.interval {
@@ -75,36 +82,44 @@ fn create_backup(config: &GameConfig) -> Result<(), Box<dyn Error>> {
 
     // Compression on
     if config.zip {
-        let zip_file = fs::File::create(config.save_dir.join(format!("{}.zip", &backup_string)))?;
-        let mut writer = ZipWriter::new(zip_file);
-
-        for file_path in config.file_list.into_iter() {
-            let options = FileOptions::default();
-            let relative_path = file_path.strip_prefix(&config.file_list.root)?;
-            let file_string = path_to_string(relative_path)?;
-
-            writer.start_file(file_string, options)?;
-            let file = fs::File::open(file_path)?;
-            let buffer = BufReader::new(file);
-            let content: Vec<u8> = buffer.bytes().map(|x| x.unwrap()).collect();
-
-            writer.write_all(&content)?;
-        }
+        create_zip_backup(config, &backup_string)?;
 
     // Compression off
     } else {
-        for file_path in config.file_list.into_iter() {
-            let relative_path = file_path.strip_prefix(&config.file_list.root)?;
-            let save_dir = config.save_dir.join(&backup_string);
-            let save_path = save_dir.join(&relative_path);
-
-            fs::create_dir_all(save_path.parent().unwrap())?;
-            fs::File::create(&save_path)?;
-            println!("{:?}", &save_path);
-            fs::copy(&file_path, &save_path)?;
-        }
+        create_folder_backup(config, &backup_string)?;
     }
+    log(format!("Created backup for {}", &config.name));
     Ok(())
+}
+
+fn create_folder_backup(config: &GameConfig, backup_string: &str) -> GenericResult<()> {
+    Ok(for file_path in config.file_list.into_iter() {
+        let relative_path = file_path.strip_prefix(&config.file_list.root)?;
+        let save_dir = config.save_dir.join(&backup_string);
+        let save_path = save_dir.join(&relative_path);
+
+        fs::create_dir_all(save_path.parent().unwrap())?;
+        fs::File::create(&save_path)?;
+        println!("{:?}", &save_path);
+        fs::copy(&file_path, &save_path)?;
+    })
+}
+
+fn create_zip_backup(config: &GameConfig, backup_string: &str) -> GenericResult<()> {
+    let zip_file = fs::File::create(config.save_dir.join(format!("{}.zip", &backup_string)))?;
+    let mut writer = ZipWriter::new(zip_file);
+    Ok(for file_path in config.file_list.into_iter() {
+        let options = FileOptions::default();
+        let relative_path = file_path.strip_prefix(&config.file_list.root)?;
+        let file_string = path_to_string(relative_path)?;
+
+        writer.start_file(file_string, options)?;
+        let file = fs::File::open(file_path)?;
+        let buffer = BufReader::new(file);
+        let content: Vec<u8> = buffer.bytes().map(|x| x.unwrap()).collect();
+
+        writer.write_all(&content)?;
+    })
 }
 
 #[cfg(test)]
