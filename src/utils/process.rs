@@ -1,21 +1,11 @@
-use std::{
-    fs::File,
-    io::{BufReader, Read, Write},
-};
-
-use sysinfo::{ProcessExt, System, SystemExt};
-use winapi::um::{
-    handleapi::CloseHandle,
-    processthreadsapi::{OpenProcess, TerminateProcess},
-    psapi::GetModuleFileNameExW,
-    winnt::{PROCESS_QUERY_LIMITED_INFORMATION, PROCESS_TERMINATE},
-};
-
-use super::utils::GenericResult;
+use sysinfo::{PidExt, ProcessExt, System, SystemExt};
 
 pub fn replace_instance() {
     let s = System::new_all();
-    for process in s.processes_by_exact_name("save-backup") {
-        process.kill();
+    for process in s.processes_by_exact_name("save-backup.exe") {
+        let pid = std::process::id();
+        if process.pid() != sysinfo::Pid::from_u32(pid) {
+            process.kill();
+        }
     }
 }
