@@ -2,7 +2,7 @@
 use std::thread;
 
 use backup::run::start_backup_loop;
-use notify_rust::{Hint, Notification};
+use notify_rust::Notification;
 use utils::{
     log::{log, reset_log},
     process::replace_instance,
