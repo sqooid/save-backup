@@ -2,6 +2,7 @@
 use std::thread;
 
 use backup::run::start_backup_loop;
+use notify_rust::{Hint, Notification};
 use utils::{
     log::{log, reset_log},
     process::replace_instance,
@@ -28,6 +29,12 @@ mod utils {
 fn main() -> GenericResult<()> {
     std::panic::set_hook(Box::new(|x| {
         log(x);
+        Notification::new()
+            .summary("Save Backup crashed")
+            .body("See log file for more information")
+            .timeout(0)
+            .show()
+            .unwrap();
     }));
     reset_log()?;
     replace_instance();
