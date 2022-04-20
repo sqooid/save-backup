@@ -3,3 +3,4 @@ target
 dst
 log.txt
 release
+install.py

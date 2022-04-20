@@ -1,4 +1,4 @@
-// #![windows_subsystem = "windows"]
+#![windows_subsystem = "windows"]
 use std::thread;
 
 use backup::run::start_backup_loop;
