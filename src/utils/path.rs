@@ -1,15 +1,6 @@
-use std::path::PathBuf;
-
 use chrono::ParseError;
 
 use super::{constants::DATE_FORMAT, log::LogExpectResult};
-
-pub fn normalize_paths(paths: Vec<String>) -> Vec<PathBuf> {
-    paths
-        .iter()
-        .map(|x| PathBuf::from(str::replace(x, r"\", "/")))
-        .collect()
-}
 
 pub fn get_backup_time(name: &str, filename: &str) -> Result<i64, ParseError> {
     let date_string = &filename[(name.len() + 1)..];

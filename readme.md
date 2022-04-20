@@ -4,7 +4,7 @@ A super simple and low resource automatic backup maker.
 
 ## Configuration
 
-Save Backup uses a YAML file named `config.yaml` in the working directory to configure what the application does.
+Save Backup uses a YAML file named `config.yaml` in the working directory to configure what the application does. Paths cannot contain environment variables or aliases such as `~`.
 
 Common default options consist of:
 
@@ -17,8 +17,16 @@ Common default options consist of:
 
 Option fields specific to each `name` consist of:
 
-| Key       | Type       | Meaning                                                                                                                          |
-| --------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| `root`    | `string`   | Root directory of where save files are found                                                                                     |
-| `include` | `string[]` | Array of files (can't be directories) relative to `root` to include in backup. If not provided, all files in `root` are included |
-| `exclude` | `string[]` | Array of 
+| Key       | Type       | Meaning                                                                                                                  |
+| --------- | ---------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `root`    | `string`   | Root directory where files to be backed up reside (mandatory)                                                            |
+| `include` | `string[]` | Array of files or directories relative to `root` to include in backup. If not provided, all files in `root` are included |
+| `exclude` | `string[]` | Array of files or directories relative to `root` to exclude from backup                                                  |
+
+Common options can be overriden within each `name`
+
+### Example configuration file
+
+```yaml
+
+```

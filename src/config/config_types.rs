@@ -4,7 +4,7 @@ use std::{
     path::PathBuf,
 };
 
-use crate::utils::{log::LogExpectResult, path::normalize_paths};
+use crate::utils::log::LogExpectResult;
 
 #[derive(Debug, PartialEq)]
 pub struct SharedConfig {
