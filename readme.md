@@ -53,3 +53,7 @@ The configuration file can be reloaded by running the executable (it will close 
 ## Running
 
 In order to start the application on startup, create a shortcut to the execuable and move this shortcut to `%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup`.
+
+## Troubleshooting
+
+If the application crashes, a notification will be shown on the desktop to let you know this has happened. To find more details about the last run of the application, a `log.txt` file can be found in the working directory (presumably where you have placed the executable) containing more information about the cause of the crash.
